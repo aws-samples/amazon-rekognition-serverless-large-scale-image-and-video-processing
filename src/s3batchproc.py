@@ -13,7 +13,7 @@ def processRequest(request):
 
     bucketName = request["bucketName"]
     objectName = request["objectName"]
-    documentsTable = request["documentsTable"]
+    itemsTable = request["itemsTable"]
     outputBucket = request["outputBucket"]
 
     jobId = request["jobId"]
@@ -27,18 +27,18 @@ def processRequest(request):
     print("Extension: {}".format(ext))
 
     if(ext and ext in ["jpg", "jpeg", "png", "mov", "mp4"]):
-        documentId = str(uuid.uuid1())
-        ds = datastore.DocumentStore(documentsTable)
-        ds.createDocument(documentId, bucketName, objectName)
+        itemId = str(uuid.uuid1())
+        ds = datastore.ItemStore(itemsTable)
+        ds.createItem(itemId, bucketName, objectName)
 
-        output = "Saved document {} for {}/{}".format(documentId, bucketName, objectName)
+        output = "Saved item {} for {}/{}".format(itemId, bucketName, objectName)
 
         print(output)
 
     results = [{
         'taskId': taskId,
         'resultCode': 'Succeeded',
-        'resultString': "Document submitted for processing with Id: {}".format(documentId)
+        'resultString': "Item submitted for processing with Id: {}".format(itemId)
     }]
     
     return {
@@ -67,7 +67,7 @@ def lambda_handler(event, context):
     request["s3BucketArn"] = event['tasks'][0]['s3BucketArn']
     request["bucketName"] = request["s3BucketArn"].split(':')[-1]
 
-    request["documentsTable"] = os.environ['DOCUMENTS_TABLE']
+    request["itemsTable"] = os.environ['ITEMS_TABLE']
     request["outputBucket"] = os.environ['OUTPUT_BUCKET']
 
     return processRequest(request)

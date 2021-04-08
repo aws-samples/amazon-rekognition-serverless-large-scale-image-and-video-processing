@@ -39,10 +39,10 @@ export class RekognitionPipelineStack extends cdk.Stack {
     });
 
     //**********S3 Bucket******************************
-    //S3 bucket for input documents and output
-    const contentBucket = new s3.Bucket(this, 'DocumentsBucket', {versioned: false});
+    //S3 bucket for input items and output
+    const contentBucket = new s3.Bucket(this, 'ContentBucket', {versioned: false});
 
-    const existingContentBucket = new s3.Bucket(this, 'ExistingDocumentsBucket', {versioned: false});
+    const existingContentBucket = new s3.Bucket(this, 'ExistingContentBucket', {versioned: false});
     existingContentBucket.grantReadWrite(s3BatchOperationsRole)
 
     const inventoryAndLogsBucket = new s3.Bucket(this, 'InventoryAndLogsBucket', {versioned: false});
@@ -52,8 +52,8 @@ export class RekognitionPipelineStack extends cdk.Stack {
 
     //**********DynamoDB Table*************************
     //DynamoDB table with links to output in S3
-    const documentsTable = new dynamodb.Table(this, 'DocumentsTable', {
-      partitionKey: { name: 'documentId', type: dynamodb.AttributeType.STRING },
+    const itemsTable = new dynamodb.Table(this, 'ItemsTable', {
+      partitionKey: { name: 'itemId', type: dynamodb.AttributeType.STRING },
       stream: dynamodb.StreamViewType.NEW_IMAGE
     });
 
@@ -103,7 +103,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
       environment: {
         SYNC_QUEUE_URL: syncJobsQueue.queueUrl,
         ASYNC_QUEUE_URL: asyncJobsQueue.queueUrl,
-        DOCUMENTS_TABLE: documentsTable.tableName,
+        ITEMS_TABLE: itemsTable.tableName,
         OUTPUT_BUCKET: outputBucket.bucketName
       }
     });
@@ -131,7 +131,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
       filters: [ { suffix: '.jpeg' }]
     }));
     //Permissions
-    documentsTable.grantReadWriteData(s3Processor)
+    itemsTable.grantReadWriteData(s3Processor)
     syncJobsQueue.grantSendMessages(s3Processor)
     asyncJobsQueue.grantSendMessages(s3Processor)
 
@@ -144,7 +144,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
       handler: 'lambda_function.lambda_handler',
       timeout: cdk.Duration.seconds(30),
       environment: {
-        DOCUMENTS_TABLE: documentsTable.tableName,
+        ITEMS_TABLE: itemsTable.tableName,
         OUTPUT_BUCKET: outputBucket.bucketName
       },
       reservedConcurrentExecutions: 1,
@@ -152,7 +152,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
     //Layer
     s3BatchProcessor.addLayers(helperLayer)
     //Permissions
-    documentsTable.grantReadWriteData(s3BatchProcessor)
+    itemsTable.grantReadWriteData(s3BatchProcessor)
     s3BatchProcessor.grantInvoke(s3BatchOperationsRole)
     s3BatchOperationsRole.addToPolicy(
       new iam.PolicyStatement({
@@ -162,10 +162,10 @@ export class RekognitionPipelineStack extends cdk.Stack {
     );
     //------------------------------------------------------------
 
-    // Document processor (Router to Sync/Async Pipeline)
-    const documentProcessor = new lambda.Function(this, 'TaskProcessor', {
+    // Item processor (Router to Sync/Async Pipeline)
+    const itemProcessor = new lambda.Function(this, 'TaskProcessor', {
       runtime: lambda.Runtime.PYTHON_3_7,
-      code: lambda.Code.asset('lambda/documentprocessor'),
+      code: lambda.Code.asset('lambda/itemprocessor'),
       handler: 'lambda_function.lambda_handler',
       timeout: cdk.Duration.seconds(900),
       environment: {
@@ -174,16 +174,16 @@ export class RekognitionPipelineStack extends cdk.Stack {
       }
     });
     //Layer
-    documentProcessor.addLayers(helperLayer)
+    itemProcessor.addLayers(helperLayer)
     //Trigger
-    documentProcessor.addEventSource(new DynamoEventSource(documentsTable, {
+    itemProcessor.addEventSource(new DynamoEventSource(itemsTable, {
       startingPosition: lambda.StartingPosition.TRIM_HORIZON
     }));
 
     //Permissions
-    documentsTable.grantReadWriteData(documentProcessor)
-    syncJobsQueue.grantSendMessages(documentProcessor)
-    asyncJobsQueue.grantSendMessages(documentProcessor)
+    itemsTable.grantReadWriteData(itemProcessor)
+    syncJobsQueue.grantSendMessages(itemProcessor)
+    asyncJobsQueue.grantSendMessages(itemProcessor)
 
     //------------------------------------------------------------
 
@@ -196,7 +196,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(25),
       environment: {
         OUTPUT_BUCKET: outputBucket.bucketName,
-        DOCUMENTS_TABLE: documentsTable.tableName,
+        ITEMS_TABLE: itemsTable.tableName,
         AWS_DATA_PATH : "models"
       }
     });
@@ -210,7 +210,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
     contentBucket.grantReadWrite(syncProcessor)
     existingContentBucket.grantReadWrite(syncProcessor)
     outputBucket.grantReadWrite(syncProcessor)
-    documentsTable.grantReadWriteData(syncProcessor)
+    itemsTable.grantReadWriteData(syncProcessor)
     syncProcessor.addToRolePolicy(
       new iam.PolicyStatement({
         actions: ["rekognition:*"],
@@ -275,7 +275,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(900),
       environment: {
         OUTPUT_BUCKET: outputBucket.bucketName,
-        DOCUMENTS_TABLE: documentsTable.tableName,
+        ITEMS_TABLE: itemsTable.tableName,
         AWS_DATA_PATH : "models"
       }
     });
@@ -287,7 +287,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
     }));
     //Permissions
     outputBucket.grantReadWrite(jobResultProcessor)
-    documentsTable.grantReadWriteData(jobResultProcessor)
+    itemsTable.grantReadWriteData(jobResultProcessor)
     contentBucket.grantReadWrite(jobResultProcessor)
     existingContentBucket.grantReadWrite(jobResultProcessor)
     jobResultProcessor.addToRolePolicy(

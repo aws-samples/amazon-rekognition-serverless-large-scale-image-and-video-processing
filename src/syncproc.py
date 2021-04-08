@@ -65,27 +65,27 @@ def callRekognition(bucketName, objectName, apiName):
     return response
 
 
-def processImage(documentId, bucketName, objectName, outputBucketName, documentsTableName):
+def processImage(itemId, bucketName, objectName, outputBucketName, itemsTableName):
 
     
     apiName = objectName.split("/")[0]
 
     response = callRekognition(bucketName, objectName, apiName)
 
-    print("Generating output for DocumentId: {}".format(documentId))
+    print("Generating output for ItemId: {}".format(itemId))
     print(response)
 
-    outputPath = "sync/{}-analysis/{}/".format(objectName, documentId)
+    outputPath = "sync/{}-analysis/{}/".format(objectName, itemId)
     opath = "{}response.json".format(outputPath)
     S3Helper.writeToS3(json.dumps(response), outputBucketName, opath)
 
-    #opg = OutputGenerator(documentId, response, bucketName, objectName, detectForms, detectTables, ddb)
+    #opg = OutputGenerator(itemId, response, bucketName, objectName, detectForms, detectTables, ddb)
     #opg.run()
 
-    print("DocumentId: {}".format(documentId))
+    print("ItemId: {}".format(itemId))
 
-    ds = datastore.DocumentStore(documentsTableName)
-    ds.markDocumentComplete(documentId)
+    ds = datastore.ItemStore(itemsTableName)
+    ds.markItemComplete(itemId)
 
 # --------------- Main handler ------------------
 
@@ -97,17 +97,17 @@ def processRequest(request):
 
     bucketName = request['bucketName']
     objectName = request['objectName']
-    documentId = request['documentId']
+    itemId = request['itemId']
     outputBucket = request['outputBucket']
-    documentsTable = request['documentsTable']
-    documentsTable = request["documentsTable"]
+    itemsTable = request['itemsTable']
+    itemsTable = request["itemsTable"]
     
-    if(documentId and bucketName and objectName):
-        print("DocumentId: {}, Object: {}/{}".format(documentId, bucketName, objectName))
+    if(itemId and bucketName and objectName):
+        print("ItemId: {}, Object: {}/{}".format(itemId, bucketName, objectName))
 
-        processImage(documentId, bucketName, objectName, outputBucket, documentsTable)
+        processImage(itemId, bucketName, objectName, outputBucket, itemsTable)
 
-        output = "Document: {}, Object: {}/{} processed.".format(documentId, bucketName, objectName)
+        output = "Item: {}, Object: {}/{} processed.".format(itemId, bucketName, objectName)
         print(output)
 
     return {
@@ -122,10 +122,10 @@ def lambda_handler(event, context):
     print("Message: {}".format(message))
 
     request = {}
-    request["documentId"] = message['documentId']
+    request["itemId"] = message['itemId']
     request["bucketName"] = message['bucketName']
     request["objectName"] = message['objectName']
     request["outputBucket"] = os.environ['OUTPUT_BUCKET']
-    request["documentsTable"] = os.environ['DOCUMENTS_TABLE']
+    request["itemsTable"] = os.environ['ITEMS_TABLE']
 
     return processRequest(request)

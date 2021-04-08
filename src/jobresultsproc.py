@@ -66,7 +66,7 @@ def processRequest(request):
     bucketName = request['bucketName']
     objectName = request['objectName']
     outputBucket = request["outputBucket"]
-    documentsTable = request["documentsTable"]
+    itemsTable = request["itemsTable"]
 
     pages = getJobResults(jobAPI, jobId)
 
@@ -80,12 +80,12 @@ def processRequest(request):
     #opg = OutputGenerator(jobTag, pages, bucketName, objectName, ddb)
     #opg.run()
 
-    print("DocumentId: {}".format(jobTag))
+    print("ItemId: {}".format(jobTag))
 
-    ds = datastore.DocumentStore(documentsTable)
-    ds.markDocumentComplete(jobTag)
+    ds = datastore.ItemStore(itemsTable)
+    ds.markItemComplete(jobTag)
 
-    output = "Processed -> Document: {}, Object: {}/{} processed.".format(jobTag, bucketName, objectName)
+    output = "Processed -> Item: {}, Object: {}/{} processed.".format(jobTag, bucketName, objectName)
 
     print(output)
 
@@ -113,7 +113,7 @@ def lambda_handler(event, context):
     request["objectName"] = message['Video']['S3ObjectName']
     
     request["outputBucket"] = os.environ['OUTPUT_BUCKET']
-    request["documentsTable"] = os.environ['DOCUMENTS_TABLE']
+    request["itemsTable"] = os.environ['ITEMS_TABLE']
 
     return processRequest(request)
 

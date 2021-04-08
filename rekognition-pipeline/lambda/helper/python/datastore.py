@@ -3,130 +3,130 @@ from botocore.exceptions import ClientError
 from helper import AwsHelper
 import  datetime
 
-class DocumentStore:
+class ItemStore:
 
-    def __init__(self, documentsTableName):
-        self._documentsTableName = documentsTableName
+    def __init__(self, itemsTableName):
+        self._itemsTableName = itemsTableName
 
-    def createDocument(self, documentId, bucketName, objectName):
+    def createItem(self, itemId, bucketName, objectName):
 
         err = None
 
         dynamodb = AwsHelper().getResource("dynamodb")
-        table = dynamodb.Table(self._documentsTableName)
+        table = dynamodb.Table(self._itemsTableName)
 
         try:
             table.update_item(
-                Key = { "documentId": documentId },
-                UpdateExpression = 'SET bucketName = :bucketNameValue, objectName = :objectNameValue, documentStatus = :documentstatusValue, documentCreatedOn = :documentCreatedOnValue',
-                ConditionExpression = 'attribute_not_exists(documentId)',
+                Key = { "itemId": itemId },
+                UpdateExpression = 'SET bucketName = :bucketNameValue, objectName = :objectNameValue, itemStatus = :itemstatusValue, itemCreatedOn = :itemCreatedOnValue',
+                ConditionExpression = 'attribute_not_exists(itemId)',
                 ExpressionAttributeValues = {
                     ':bucketNameValue': bucketName,
                     ':objectNameValue': objectName,
-                    ':documentstatusValue': 'IN_PROGRESS',
-                    ':documentCreatedOnValue': str(datetime.datetime.utcnow())
+                    ':itemstatusValue': 'IN_PROGRESS',
+                    ':itemCreatedOnValue': str(datetime.datetime.utcnow())
                 }
             )
         except ClientError as e:
             print(e)
             if e.response['Error']['Code'] == "ConditionalCheckFailedException":
                 print(e.response['Error']['Message'])
-                err  = {'Error' : 'Document already exist.'}
+                err  = {'Error' : 'Item already exist.'}
             else:
                 raise
 
         return err
 
-    def updateDocumentStatus(self, documentId, documentStatus):
+    def updateItemStatus(self, itemId, itemStatus):
 
         err = None
 
         dynamodb = AwsHelper().getResource("dynamodb")
-        table = dynamodb.Table(self._documentsTableName)
+        table = dynamodb.Table(self._itemsTableName)
 
         try:
             table.update_item(
-                Key = { 'documentId': documentId },
-                UpdateExpression = 'SET documentStatus= :documentstatusValue',
-                ConditionExpression = 'attribute_exists(documentId)',
+                Key = { 'itemId': itemId },
+                UpdateExpression = 'SET itemStatus= :itemstatusValue',
+                ConditionExpression = 'attribute_exists(itemId)',
                 ExpressionAttributeValues = {
-                    ':documentstatusValue': documentStatus
+                    ':itemstatusValue': itemStatus
                 }
             )
         except ClientError as e:
             if e.response['Error']['Code'] == "ConditionalCheckFailedException":
                 print(e.response['Error']['Message'])
-                err  = {'Error' : 'Document does not exist.'}
+                err  = {'Error' : 'Item does not exist.'}
             else:
                 raise
 
         return err
 
-    def markDocumentComplete(self, documentId):
+    def markItemComplete(self, itemId):
 
         err = None
 
         dynamodb = AwsHelper().getResource("dynamodb")
-        table = dynamodb.Table(self._documentsTableName)
+        table = dynamodb.Table(self._itemsTableName)
 
         try:
             table.update_item(
-                Key = { 'documentId': documentId },
-                UpdateExpression = 'SET documentStatus= :documentstatusValue, documentCompletedOn = :documentCompletedOnValue',
-                ConditionExpression = 'attribute_exists(documentId)',
+                Key = { 'itemId': itemId },
+                UpdateExpression = 'SET itemStatus= :itemstatusValue, itemCompletedOn = :itemCompletedOnValue',
+                ConditionExpression = 'attribute_exists(itemId)',
                 ExpressionAttributeValues = {
-                    ':documentstatusValue': "SUCCEEDED",
-                    ':documentCompletedOnValue': str(datetime.datetime.utcnow())
+                    ':itemstatusValue': "SUCCEEDED",
+                    ':itemCompletedOnValue': str(datetime.datetime.utcnow())
                 }
             )
         except ClientError as e:
             if e.response['Error']['Code'] == "ConditionalCheckFailedException":
                 print(e.response['Error']['Message'])
-                err  = {'Error' : 'Document does not exist.'}
+                err  = {'Error' : 'Item does not exist.'}
             else:
                 raise
 
         return err
 
-    def getDocument(self, documentId):
+    def getItem(self, itemId):
 
         dynamodb = AwsHelper().getClient("dynamodb")
 
         ddbGetItemResponse = dynamodb.get_item(
-            Key={'documentId': {'S': documentId} },
-            TableName=self._documentsTableName
+            Key={'itemId': {'S': itemId} },
+            TableName=self._itemsTableName
         )
 
         itemToReturn = None
 
         if('Item' in ddbGetItemResponse):
-            itemToReturn = { 'documentId' : ddbGetItemResponse['Item']['documentId']['S'],
+            itemToReturn = { 'itemId' : ddbGetItemResponse['Item']['itemId']['S'],
                              'bucketName' : ddbGetItemResponse['Item']['bucketName']['S'],
                              'objectName' : ddbGetItemResponse['Item']['objectName']['S'],
-                             'documentStatus' : ddbGetItemResponse['Item']['documentStatus']['S'] }
+                             'itemStatus' : ddbGetItemResponse['Item']['itemStatus']['S'] }
 
         return itemToReturn
 
-    def deleteDocument(self, documentId):
+    def deleteItem(self, itemId):
 
         dynamodb = AwsHelper().getResource("dynamodb")
-        table = dynamodb.Table(self._documentsTableName)
+        table = dynamodb.Table(self._itemsTableName)
 
         table.delete_item(
             Key={
-                'documentId': documentId
+                'itemId': itemId
             }
         )
 
-    def getDocuments(self, nextToken=None):
+    def getItems(self, nextToken=None):
 
         dynamodb = AwsHelper().getResource("dynamodb")
-        table = dynamodb.Table(self._documentsTableName)
+        table = dynamodb.Table(self._itemsTableName)
 
         pageSize = 25
 
         if(nextToken):
-            response = table.scan(ExclusiveStartKey={ "documentId" : nextToken}, Limit=pageSize)
+            response = table.scan(ExclusiveStartKey={ "itemId" : nextToken}, Limit=pageSize)
         else:
             response = table.scan(Limit=pageSize)
 
@@ -137,13 +137,13 @@ class DocumentStore:
         if('Items' in response):        
             data = response['Items']
 
-        documents = { 
-            "documents" : data
+        items = { 
+            "items" : data
         }
 
         if 'LastEvaluatedKey' in response:
-            nextToken = response['LastEvaluatedKey']['documentId']
+            nextToken = response['LastEvaluatedKey']['itemId']
             print("nexToken: {}".format(nextToken))
-            documents["nextToken"] = nextToken
+            items["nextToken"] = nextToken
 
-        return documents
+        return items

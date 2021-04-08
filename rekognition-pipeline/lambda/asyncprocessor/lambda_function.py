@@ -4,9 +4,9 @@ import os
 from helper import AwsHelper
 import time
 
-def startJob(bucketName, objectName, documentId, snsTopic, snsRole, apiName):
+def startJob(bucketName, objectName, itemId, snsTopic, snsRole, apiName):
 
-    print("Starting job with documentId: {}, bucketName: {}, objectName: {}".format(documentId, bucketName, objectName))
+    print("Starting job with itemId: {}, bucketName: {}, objectName: {}".format(itemId, bucketName, objectName))
 
     response = None
     client = AwsHelper().getClient('rekognition')
@@ -19,12 +19,12 @@ def startJob(bucketName, objectName, documentId, snsTopic, snsRole, apiName):
                     'Name': objectName
                 }
             },
-            ClientRequestToken = documentId,
+            ClientRequestToken = itemId,
             NotificationChannel={
                 'SNSTopicArn': snsTopic,
                 'RoleArn': snsRole
             },
-            JobTag=documentId
+            JobTag=itemId
         )
     elif(apiName == "text"):
         response = client.start_text_detection(
@@ -34,12 +34,12 @@ def startJob(bucketName, objectName, documentId, snsTopic, snsRole, apiName):
                     'Name': objectName
                 }
             },
-            ClientRequestToken = documentId,
+            ClientRequestToken = itemId,
             NotificationChannel={
                 'SNSTopicArn': snsTopic,
                 'RoleArn': snsRole
             },
-            JobTag=documentId
+            JobTag=itemId
         )
     elif(apiName == "faces"):
         response = client.start_face_detection(
@@ -49,12 +49,12 @@ def startJob(bucketName, objectName, documentId, snsTopic, snsRole, apiName):
                     'Name': objectName
                 }
             },
-            ClientRequestToken = documentId,
+            ClientRequestToken = itemId,
             NotificationChannel={
                 'SNSTopicArn': snsTopic,
                 'RoleArn': snsRole
             },
-            JobTag=documentId
+            JobTag=itemId
         )
     elif(apiName == "moderation"):
         response = client.start_content_moderation(
@@ -64,12 +64,12 @@ def startJob(bucketName, objectName, documentId, snsTopic, snsRole, apiName):
                     'Name': objectName
                 }
             },
-            ClientRequestToken = documentId,
+            ClientRequestToken = itemId,
             NotificationChannel={
                 'SNSTopicArn': snsTopic,
                 'RoleArn': snsRole
             },
-            JobTag=documentId
+            JobTag=itemId
         )
     elif(apiName == "celebrities"):
         response = client.start_celebrity_recognition(
@@ -79,12 +79,12 @@ def startJob(bucketName, objectName, documentId, snsTopic, snsRole, apiName):
                     'Name': objectName
                 }
             },
-            ClientRequestToken = documentId,
+            ClientRequestToken = itemId,
             NotificationChannel={
                 'SNSTopicArn': snsTopic,
                 'RoleArn': snsRole
             },
-            JobTag=documentId
+            JobTag=itemId
         )
     else:
         response = client.start_label_detection(
@@ -94,12 +94,12 @@ def startJob(bucketName, objectName, documentId, snsTopic, snsRole, apiName):
                     'Name': objectName
                 }
             },
-            ClientRequestToken = documentId,
+            ClientRequestToken = itemId,
             NotificationChannel={
                 'SNSTopicArn': snsTopic,
                 'RoleArn': snsRole
             },
-            JobTag=documentId
+            JobTag=itemId
         )
     return response["JobId"]
 
@@ -113,16 +113,16 @@ def processItem(message, snsTopic, snsRole):
 
     bucketName = messageBody['bucketName']
     objectName = messageBody['objectName']
-    documentId = messageBody['documentId']
+    itemId = messageBody['itemId']
     apiName = objectName.split("/")[0]
 
     print('Bucket Name: ' + bucketName)
     print('Object Name: ' + objectName)
-    print('Task ID: ' + documentId)
+    print('Task ID: ' + itemId)
 
     print('starting Rekognition job...')
 
-    jobId = startJob(bucketName, objectName, documentId, snsTopic, snsRole, apiName)
+    jobId = startJob(bucketName, objectName, itemId, snsTopic, snsRole, apiName)
 
     if(jobId):
         print("Started Job with Id: {}".format(jobId))

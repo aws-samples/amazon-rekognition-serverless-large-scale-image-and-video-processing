@@ -20,7 +20,7 @@ def processRequest(request):
 
     print("request: {}".format(request))
 
-    documentId = request["documentId"]
+    itemId = request["itemId"]
     bucketName = request["bucketName"]
     objectName = request["objectName"]
 
@@ -35,14 +35,14 @@ def processRequest(request):
         qUrl = request['asyncQueueUrl']
 
     if(qUrl):
-        jsonMessage = { 'documentId' : documentId,
+        jsonMessage = { 'itemId' : itemId,
             'bucketName': bucketName,
             'objectName' : objectName }
 
         client = AwsHelper().getClient('sqs')
         response = postMessage(client, qUrl, jsonMessage)
 
-    output = "Completed routing for documentId: {}, object: {}/{}".format(documentId, bucketName, objectName)
+    output = "Completed routing for itemId: {}, object: {}/{}".format(itemId, bucketName, objectName)
 
     print(output)
     return response
@@ -51,25 +51,25 @@ def processRecord(record, syncQueueUrl, asyncQueueUrl):
     
     newImage = record["dynamodb"]["NewImage"]
     
-    documentId = None
+    itemId = None
     bucketName = None
     objectName = None
-    documentStatus = None
+    itemStatus = None
     
-    if("documentId" in newImage and "S" in newImage["documentId"]):
-        documentId = newImage["documentId"]["S"]
+    if("itemId" in newImage and "S" in newImage["itemId"]):
+        itemId = newImage["itemId"]["S"]
     if("bucketName" in newImage and "S" in newImage["bucketName"]):
         bucketName = newImage["bucketName"]["S"]
     if("objectName" in newImage and "S" in newImage["objectName"]):
         objectName = newImage["objectName"]["S"]
-    if("documentStatus" in newImage and "S" in newImage["documentStatus"]):
-        documentStatus = newImage["documentStatus"]["S"]
+    if("itemStatus" in newImage and "S" in newImage["itemStatus"]):
+        itemStatus = newImage["itemStatus"]["S"]
 
-    print("DocumentId: {}, BucketName: {}, ObjectName: {}, DocumentStatus: {}".format(documentId, bucketName, objectName, documentStatus))
+    print("ItemId: {}, BucketName: {}, ObjectName: {}, ItemStatus: {}".format(itemId, bucketName, objectName, itemStatus))
 
-    if(documentId and bucketName and objectName and documentStatus):
+    if(itemId and bucketName and objectName and itemStatus):
         request = {}
-        request["documentId"] = documentId
+        request["itemId"] = itemId
         request["bucketName"] = bucketName
         request["objectName"] = objectName
         request['syncQueueUrl'] = syncQueueUrl
@@ -94,9 +94,7 @@ def lambda_handler(event, context):
                     if("eventName" in record and record["eventName"] == "INSERT"):
                         if("dynamodb" in record and record["dynamodb"] and "NewImage" in record["dynamodb"]):
                             response = processRecord(record, syncQueueUrl, asyncQueueUrl)
-                            return {
-                                'message': json.dumps(response)
-                            }
+                            #print ("message: {}". format(json.dumps(response)))
 
                 except Exception as e:
                     print("Failed to process record. Exception: {}".format(e))

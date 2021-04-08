@@ -108,12 +108,12 @@ class S3Helper:
             else:
                 hasMoreContent = False
 
-            for doc in listObjectsResponse['Contents']:
-                docName = doc['Key']
-                docExt = FileHelper.getFileExtenstion(docName)
-                docExtLower = docExt.lower()
-                if(docExtLower in allowedFileTypes):
-                    files.append(docName)
+            for item in listObjectsResponse['Contents']:
+                itemName = item['Key']
+                itemExt = FileHelper.getFileExtenstion(itemName)
+                itemExtLower = itemExt.lower()
+                if(itemExtLower in allowedFileTypes):
+                    files.append(itemName)
 
         return files
 
@@ -177,18 +177,18 @@ class FileHelper:
 
     @staticmethod
     def readFile(fileName):
-        with open(fileName, 'r') as document:
-            return document.read()
+        with open(fileName, 'r') as item:
+            return item.read()
 
     @staticmethod
     def writeToFile(fileName, content):
-        with open(fileName, 'w') as document:
-            document.write(content)
+        with open(fileName, 'w') as item:
+            item.write(content)
 
     @staticmethod
     def writeToFileWithMode(fileName, content, mode):
-        with open(fileName, mode) as document:
-            document.write(content)
+        with open(fileName, mode) as item:
+            item.write(content)
     @staticmethod
     def getFilesInFolder(path, fileTypes):
         for file in os.listdir(path):
