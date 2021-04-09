@@ -4,7 +4,7 @@ This reference architecture shows how you can extract insights from images and v
 - Process large backfill of existing images and videos in an Amazon S3 bucket.
 - Serverless, highly available and highly scalable architecture.
 - Easily handle spiky workloads.
-- Pipelines to support both Sync(for images) and Async (for vidoes) APIs of Amazon Rekognition.
+- Pipelines to support both Sync (for images) and Async (for vidoes) APIs of Amazon Rekognition.
 - Control the rate at which you process images and videos without doing any complex distributed job management. This control can be important to protect your downstream systems which will be ingesting output from Rekognition.
 - Sample implementation which takes advantage of [AWS Cloud Development Kit (CDK)](https://docs.aws.amazon.com/cdk/latest/guide/home.html) to define infrastructure in code and provision it through CloudFormation.
 
