@@ -10,10 +10,13 @@ import dynamodb = require('@aws-cdk/aws-dynamodb');
 import lambda = require('@aws-cdk/aws-lambda');
 import s3 = require('@aws-cdk/aws-s3');
 import {LambdaFunction} from "@aws-cdk/aws-events-targets";
+import * as fs from 'fs';
 
 export class RekognitionPipelineStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, props);
+    super(scope, id, Object.assign({}, props, {
+      description: "Process images and videos at scale using Amazon Rekognition (uksb-1sd4nlm88)"
+    }));
 
     // The code that defines your stack goes here
     
@@ -318,8 +321,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
     s3FolderCreator.node.addDependency(existingContentBucket)
 
     const resource = new cfn.CustomResource(this, 'Resource', {
-      provider: cfn.CustomResourceProvider.lambda(s3FolderCreator),
-      properties: cdk.StackProps
+      provider: cfn.CustomResourceProvider.lambda(s3FolderCreator)
     });
 
   }
