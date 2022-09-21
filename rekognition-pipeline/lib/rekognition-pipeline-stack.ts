@@ -1,22 +1,19 @@
-import * as cdk from '@aws-cdk/core';
-import cfn = require('@aws-cdk/aws-cloudformation');
-import events = require('@aws-cdk/aws-events');
-import iam = require('@aws-cdk/aws-iam');
-import { S3EventSource, SqsEventSource, SnsEventSource, DynamoEventSource } from '@aws-cdk/aws-lambda-event-sources';
-import sns = require('@aws-cdk/aws-sns');
-import snsSubscriptions = require("@aws-cdk/aws-sns-subscriptions");
-import sqs = require('@aws-cdk/aws-sqs');
-import dynamodb = require('@aws-cdk/aws-dynamodb');
-import lambda = require('@aws-cdk/aws-lambda');
-import s3 = require('@aws-cdk/aws-s3');
-import {LambdaFunction} from "@aws-cdk/aws-events-targets";
-import * as fs from 'fs';
+import * as cdk from 'aws-cdk-lib';
+import events = require('aws-cdk-lib/aws-events');
+import iam = require('aws-cdk-lib/aws-iam');
+import { S3EventSource, SqsEventSource, SnsEventSource, DynamoEventSource } from 'aws-cdk-lib/aws-lambda-event-sources';
+import sns = require('aws-cdk-lib/aws-sns');
+import snsSubscriptions = require("aws-cdk-lib/aws-sns-subscriptions");
+import sqs = require('aws-cdk-lib/aws-sqs');
+import dynamodb = require('aws-cdk-lib/aws-dynamodb');
+import lambda = require('aws-cdk-lib/aws-lambda');
+import s3 = require('aws-cdk-lib/aws-s3');
+import {LambdaFunction} from "aws-cdk-lib/aws-events-targets";
+import { Construct } from 'constructs';
 
 export class RekognitionPipelineStack extends cdk.Stack {
-  constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
-    super(scope, id, Object.assign({}, props, {
-      description: "Process images and videos at scale using Amazon Rekognition (uksb-1sd4nlm88)"
-    }));
+  constructor(scope: Construct, id: string, props?: cdk.StackProps) {
+    super(scope, id, props);
 
     // The code that defines your stack goes here
     
