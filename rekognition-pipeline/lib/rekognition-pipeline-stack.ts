@@ -300,9 +300,8 @@ export class RekognitionPipelineStack extends cdk.Stack {
     //--------------
     // S3 folders creator
 
-    const s3FolderCreator = new lambda.SingletonFunction(this, 's3FolderCreator', {
-      uuid: 'f7d4f730-4ee1-11e8-9c2d-fa7ae01bbebc',
-      code: new lambda.InlineCode(fs.readFileSync('lambda/s3FolderCreator/lambda_function.py', { encoding: 'utf-8' })),
+    const s3FolderCreator = new lambda.Function(this, 's3FolderCreator', {
+      code: lambda.Code.fromAsset('lambda/s3FolderCreator'),
       description: 'Creates folders in S3 bucket for different Rekognition APIs',
       handler: 'index.lambda_handler',
       timeout: cdk.Duration.seconds(60),
@@ -317,9 +316,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
     s3FolderCreator.node.addDependency(contentBucket)
     s3FolderCreator.node.addDependency(existingContentBucket)
 
-    const resource = new cfn.CustomResource(this, 'Resource', {
-      provider: cfn.CustomResourceProvider.lambda(s3FolderCreator)
-    });
+    
 
   }
 }
