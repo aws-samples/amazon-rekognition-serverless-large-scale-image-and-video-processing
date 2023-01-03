@@ -97,7 +97,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
     // S3 Event processor
     const s3Processor = new lambda.Function(this, 'S3Processor', {
       runtime: lambda.Runtime.PYTHON_3_7,
-      code: lambda.Code.asset('lambda/s3processor'),
+      code: lambda.Code.fromAsset('lambda/s3processor'),
       handler: 'lambda_function.lambda_handler',
       timeout: cdk.Duration.seconds(30),
       environment: {
@@ -140,7 +140,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
     // S3 Batch Operations Event processor 
     const s3BatchProcessor = new lambda.Function(this, 'S3BatchProcessor', {
       runtime: lambda.Runtime.PYTHON_3_7,
-      code: lambda.Code.asset('lambda/s3batchprocessor'),
+      code: lambda.Code.fromAsset('lambda/s3batchprocessor'),
       handler: 'lambda_function.lambda_handler',
       timeout: cdk.Duration.seconds(30),
       environment: {
@@ -165,7 +165,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
     // Item processor (Router to Sync/Async Pipeline)
     const itemProcessor = new lambda.Function(this, 'TaskProcessor', {
       runtime: lambda.Runtime.PYTHON_3_7,
-      code: lambda.Code.asset('lambda/itemprocessor'),
+      code: lambda.Code.fromAsset('lambda/itemprocessor'),
       handler: 'lambda_function.lambda_handler',
       timeout: cdk.Duration.seconds(900),
       environment: {
@@ -190,7 +190,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
     // Sync Jobs Processor (Process jobs using sync APIs)
     const syncProcessor = new lambda.Function(this, 'SyncProcessor', {
       runtime: lambda.Runtime.PYTHON_3_7,
-      code: lambda.Code.asset('lambda/syncprocessor'),
+      code: lambda.Code.fromAsset('lambda/syncprocessor'),
       handler: 'lambda_function.lambda_handler',
       reservedConcurrentExecutions: 1,
       timeout: cdk.Duration.seconds(25),
@@ -223,7 +223,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
     // Async Job Processor (Start jobs using Async APIs)
     const asyncProcessor = new lambda.Function(this, 'ASyncProcessor', {
       runtime: lambda.Runtime.PYTHON_3_7,
-      code: lambda.Code.asset('lambda/asyncprocessor'),
+      code: lambda.Code.fromAsset('lambda/asyncprocessor'),
       handler: 'lambda_function.lambda_handler',
       reservedConcurrentExecutions: 1,
       timeout: cdk.Duration.seconds(60),
@@ -268,7 +268,7 @@ export class RekognitionPipelineStack extends cdk.Stack {
     // Async Jobs Results Processor
     const jobResultProcessor = new lambda.Function(this, 'JobResultProcessor', {
       runtime: lambda.Runtime.PYTHON_3_7,
-      code: lambda.Code.asset('lambda/jobresultprocessor'),
+      code: lambda.Code.fromAsset('lambda/jobresultprocessor'),
       handler: 'lambda_function.lambda_handler',
       memorySize: 2000,
       reservedConcurrentExecutions: 50,
